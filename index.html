@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚡ DMWIN V65 ULTRA PRO ⚡</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+
+    <style>
+        :root {
+            --primary: #00d9ff; --secondary: #ff00ff; --accent: #00ffaa;
+            --win: #00ff88; --loss: #ff3366; --jackpot: #ffcc00;
+            --bg: #050508; --card: rgba(10, 10, 20, 0.95);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            background: var(--bg); color: white; font-family: 'Rajdhani', sans-serif; 
+            display: flex; flex-direction: column; align-items: center; min-height: 100vh;
+        }
+
+        #login-screen {
+            position: fixed; inset: 0; background: radial-gradient(circle at center, #1a1a2e 0%, #050508 100%);
+            z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 20px;
+        }
+        .login-box {
+            width: 100%; max-width: 400px; padding: 40px; background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(0, 217, 255, 0.3); border-radius: 30px; backdrop-filter: blur(20px);
+            text-align: center; box-shadow: 0 0 50px rgba(0, 0, 0, 0.8);
+        }
+        .login-box h1 { font-family: 'Orbitron'; font-size: 26px; color: var(--primary); margin-bottom: 10px; text-shadow: 0 0 15px var(--primary); }
+        .login-box p { font-size: 14px; color: #888; margin-bottom: 30px; letter-spacing: 2px; }
+        .input-group input {
+            width: 100%; padding: 16px; background: rgba(0,0,0,0.6); border: 1px solid #333;
+            border-radius: 12px; color: white; font-family: 'Orbitron'; text-align: center; outline: none; margin-bottom: 20px;
+        }
+        .login-btn {
+            width: 100%; padding: 16px; background: linear-gradient(90deg, var(--primary), #0066ff);
+            border: none; border-radius: 12px; color: #000; font-family: 'Orbitron'; font-weight: 900;
+            cursor: pointer; transition: 0.3s;
+        }
+        .login-btn:hover { transform: scale(1.03); box-shadow: 0 0 30px var(--primary); }
+        #loginMsg { margin-top: 15px; font-weight: bold; font-size: 14px; min-height: 20px; }
+
+        #game-content { display: none; width: 100%; max-width: 380px; padding: 15px; }
+        .container { width: 100%; }
+        .tabs { display: flex; gap: 10px; margin-bottom: 15px; }
+        .tab { 
+            flex: 1; padding: 12px; background: rgba(255,255,255,0.05); 
+            border: 1px solid #333; color: #777; border-radius: 10px; 
+            cursor: pointer; font-family: 'Orbitron'; font-size: 11px; text-align: center;
+        }
+        .tab.active { background: var(--primary); color: #000; box-shadow: 0 0 15px var(--primary); font-weight: 900; border: none; }
+        .rgb-box { position: relative; border-radius: 20px; padding: 3px; overflow: hidden; background: #111; }
+        .rgb-box::before {
+            content: ""; position: absolute; width: 200%; height: 200%; top: -50%; left: -50%;
+            background: conic-gradient(var(--accent), var(--primary), var(--secondary), var(--accent));
+            animation: rotate 3s linear infinite;
+        }
+        .inner { position: relative; background: var(--card); border-radius: 18px; padding: 25px; text-align: center; z-index: 2; backdrop-filter: blur(10px); }
+        @keyframes rotate { 100% { transform: rotate(360deg); } }
+        .period-id { font-family: 'Orbitron'; font-size: 14px; color: var(--accent); letter-spacing: 2px; }
+        .timer { font-family: 'Orbitron'; font-size: 55px; font-weight: 900; color: #fff; text-shadow: 0 0 10px var(--primary); }
+        .bs-text { font-family: 'Orbitron'; font-size: 65px; font-weight: 900; margin: 10px 0; }
+        .num-row { display: flex; justify-content: center; gap: 20px; margin-top: 15px; }
+        .num-ball { width: 60px; height: 60px; border-radius: 15px; border: 2px solid var(--primary); display: flex; align-items: center; justify-content: center; font-family: 'Orbitron'; font-size: 30px; background: #000; color: var(--primary); }
+        .history { margin-top: 20px; width: 100%; border-radius: 15px; background: rgba(0,0,0,0.85); border: 1px solid #333; overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th { padding: 12px; background: rgba(0, 217, 255, 0.15); color: var(--primary); font-family: 'Orbitron'; font-size: 10px; }
+        td { padding: 12px; text-align: center; border-bottom: 1px solid #222; }
+        .badge { padding: 4px 8px; border-radius: 5px; font-weight: bold; font-size: 10px; text-transform: uppercase; }
+        .win { background: var(--win); color: #000; }
+        .loss { background: var(--loss); color: #fff; }
+        .jackpot { background: var(--jackpot); color: #000; box-shadow: 0 0 10px var(--jackpot); }
+        .wait { background: #555; color: white; }
+    </style>
+</head>
+<body>
+
+<div id="login-screen">
+    <div class="login-box">
+        <h1>DMWIN PRO V65</h1>
+        <p>HACK ACTIVATION</p>
+        <div class="input-group">
+            <input type="text" id="accessKey" placeholder="ENTER ACCESS KEY">
+        </div>
+        <button class="login-btn" onclick="verifyKey()">ACTIVATE SYSTEM</button>
+        <p id="loginMsg"></p>
+    </div>
+</div>
+
+<div id="game-content" class="container">
+    <div class="tabs">
+        <div id="tab30" class="tab active" onclick="setMode('30S')">WINGO 30S</div>
+        <div id="tab60" class="tab" onclick="setMode('1M')">WINGO 1M</div>
+    </div>
+
+    <div class="rgb-box">
+        <div class="inner">
+            <div id="pId" class="period-id">PERIOD: LOADING</div>
+            <div id="timer" class="timer">00:00</div>
+            <div id="bsBox" class="bs-text">--</div>
+            <div class="num-row">
+                <div id="n1" class="num-ball">?</div>
+                <div id="n2" class="num-ball" style="border-color:var(--secondary); color:var(--secondary);">?</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="history">
+        <table>
+            <thead><tr><th>PERIOD</th><th>PRED</th><th>RES</th><th>STATUS</th></tr></thead>
+            <tbody id="hList"></tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    // ========== FIREBASE CONFIG (SAME AS ORIGINAL) ==========
+    const firebaseConfig = {
+        apiKey: "AIzaSyA5AIrvoHugtNNEL-25Us4z2lHJPCbdnMQ",
+        authDomain: "babu-3a895.firebaseapp.com",
+        databaseURL: "https://babu-3a895-default-rtdb.firebaseio.com",
+        projectId: "babu-3a895",
+        storageBucket: "babu-3a895.firebasestorage.app",
+        appId: "1:12741042292:web:115e81504b17e9c23ab121"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    // ========== GLOBAL STATE ==========
+    let state = { 
+        mode: '30S', 
+        currentP: '', 
+        history: [], 
+        lastNums: [], 
+        accessValid: false, 
+        expiryTime: 0, 
+        deviceId: '',
+        activeKey: '',
+        keyListener: null,
+        deviceListener: null,
+        intervalIds: []
+    };
+    
+    // Device ID (same as original logic)
+    state.deviceId = localStorage.getItem('device_id') || ('dev_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8));
+    localStorage.setItem('device_id', state.deviceId);
+    
+    // API endpoints (100% original)
+    const APIS = {
+        '30S': 'https://draw.ar-lottery01.com/WinGo/WinGo_30S/GetHistoryIssuePage.json',
+        '1M': 'https://draw.ar-lottery01.com/WinGo/WinGo_1M/GetHistoryIssuePage.json'
+    };
+
+    // ========== ORIGINAL PREDICTION LOGIC (EXACT SAME) ==========
+    function getSyncedPrediction(nums, period) {
+        if(!nums || nums.length < 5) return { pred: 'BIG', n1: 7, n2: 2 };
+        
+        let seed = parseInt(period.slice(-6)); 
+        let sumLast3 = nums[0] + nums[1] + nums[2];
+        let calculation = (seed + sumLast3) % 10;
+        let pred = (calculation >= 5) ? 'BIG' : 'SMALL';
+        
+        let n1, n2;
+        if (pred === 'BIG') {
+            n1 = 5 + (seed % 5); 
+            n2 = (seed + 3) % 5; 
+        } else {
+            n1 = seed % 5;
+            n2 = 5 + ((seed + 2) % 5);
+        }
+        return { pred, n1, n2 };
+    }
+
+    // ========== INSTANT REVOKE FUNCTION (ADMIN DELETE YA EXPIRY HO TO TURANT BAND) ==========
+    function revokeAccess(reason) {
+        if (!state.accessValid) return;
+        
+        // Stop all background intervals
+        state.intervalIds.forEach(id => clearInterval(id));
+        state.intervalIds = [];
+        
+        // Remove Firebase listeners
+        if (state.keyListener) {
+            db.ref('keys/' + state.activeKey).off('value', state.keyListener);
+            state.keyListener = null;
+        }
+        if (state.deviceListener) {
+            db.ref('activeDevices/' + state.activeKey).off('value', state.deviceListener);
+            state.deviceListener = null;
+        }
+        
+        // Clear local storage
+        localStorage.removeItem('active_key');
+        localStorage.removeItem('key_expiry');
+        
+        // Mark access invalid
+        state.accessValid = false;
+        state.activeKey = '';
+        
+        // Hide game & show login screen with message
+        document.getElementById('game-content').style.display = 'none';
+        const loginScreen = document.getElementById('login-screen');
+        loginScreen.style.display = 'flex';
+        const msgDiv = document.getElementById('loginMsg');
+        msgDiv.innerText = reason;
+        msgDiv.style.color = "#ff3366";
+        
+        // Also clear UI prediction to avoid confusion
+        document.getElementById('bsBox').innerText = '--';
+        document.getElementById('n1').innerText = '?';
+        document.getElementById('n2').innerText = '?';
+        document.getElementById('timer').innerText = '00:00';
+    }
+    
+    // ========== REAL-TIME KEY VALIDATION (ADMIN DELETE = TURANT BAND) ==========
+    function setupRealtimeValidation(key) {
+        // Listener for key node - agar admin ne key delete kardi toh turant pata chal jayega
+        const keyRef = db.ref('keys/' + key);
+        state.keyListener = keyRef.on('value', async (snapshot) => {
+            if (!state.accessValid) return;
+            
+            const keyData = snapshot.val();
+            
+            // CASE 1: Key deleted by admin
+            if (!keyData) {
+                revokeAccess("⛔ KEY DELETED BY ADMIN! ACCESS REVOKED!");
+                return;
+            }
+            
+            // CASE 2: Expiry time check (day khatam)
+            const now = Date.now();
+            if (keyData.expiry && now > keyData.expiry) {
+                revokeAccess("⏰ KEY EXPIRED! DAY LIMIT REACHED!");
+                return;
+            }
+            
+            // CASE 3: Update expiry time locally
+            if (keyData.expiry) {
+                state.expiryTime = keyData.expiry;
+                localStorage.setItem('key_expiry', keyData.expiry);
+            }
+        });
+        
+        // Listener for active device - agar admin ne device registration hata di
+        const deviceRef = db.ref('activeDevices/' + key);
+        state.deviceListener = deviceRef.on('value', (snap) => {
+            if (!state.accessValid) return;
+            
+            if (!snap.exists()) {
+                revokeAccess("🔒 DEVICE REGISTRATION REMOVED BY ADMIN!");
+                return;
+            }
+            
+            const devData = snap.val();
+            if (devData.deviceId !== state.deviceId) {
+                revokeAccess("⚠️ KEY USED ON ANOTHER DEVICE!");
+                return;
+            }
+        });
+    }
+
+    // ========== ORIGINAL VERIFICATION FUNCTION (UPGRADED WITH REAL-TIME) ==========
+    async function verifyKey() {
+        let key = document.getElementById('accessKey').value.trim();
+        let msg = document.getElementById('loginMsg');
+        if(!key) { msg.innerText = "Enter key!"; msg.style.color = "var(--loss)"; return; }
+        
+        try {
+            let snap = await db.ref('keys/' + key).once('value');
+            if(!snap.exists()) { msg.innerText = "INVALID KEY!"; msg.style.color = "var(--loss)"; return; }
+            
+            let data = snap.val();
+            if(Date.now() > data.expiry) { msg.innerText = "KEY EXPIRED!"; msg.style.color = "var(--loss)"; return; }
+            
+            let devSnap = await db.ref('activeDevices/' + key).once('value');
+            if(devSnap.val() && devSnap.val().deviceId !== state.deviceId) { 
+                msg.innerText = "KEY USED ON ANOTHER DEVICE!"; 
+                msg.style.color = "var(--loss)"; 
+                return; 
+            }
+            
+            // Register device
+            await db.ref('activeDevices/' + key).set({ 
+                deviceId: state.deviceId, 
+                activatedAt: Date.now(), 
+                expiry: data.expiry 
+            });
+            
+            // Local storage
+            localStorage.setItem('active_key', key);
+            localStorage.setItem('key_expiry', data.expiry);
+            
+            state.accessValid = true;
+            state.expiryTime = data.expiry;
+            state.activeKey = key;
+            
+            msg.innerText = "ACCESS GRANTED!";
+            msg.style.color = "var(--win)";
+            
+            // Setup real-time listener (ADMIN DELETE KE LIYE)
+            setupRealtimeValidation(key);
+            
+            setTimeout(() => {
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('game-content').style.display = 'block';
+                // Reset history and start fresh
+                state.history = [];
+                state.currentP = '';
+                syncData();
+                startAllIntervals();
+            }, 1000);
+        } catch(err) {
+            console.error(err);
+            msg.innerText = "NETWORK ERROR!";
+            msg.style.color = "var(--loss)";
+        }
+    }
+    
+    // ========== AUTO LOGIN (WITH VALIDATION) ==========
+    async function autoLogin() {
+        let key = localStorage.getItem('active_key');
+        let exp = localStorage.getItem('key_expiry');
+        if(!key || Date.now() > parseInt(exp)) return false;
+        
+        try {
+            let snap = await db.ref('keys/' + key).once('value');
+            if(!snap.exists()) {
+                // Key deleted by admin while offline
+                localStorage.removeItem('active_key');
+                return false;
+            }
+            
+            let keyData = snap.val();
+            if(Date.now() > keyData.expiry) {
+                localStorage.removeItem('active_key');
+                return false;
+            }
+            
+            let devSnap = await db.ref('activeDevices/' + key).once('value');
+            if(!devSnap.exists() || devSnap.val().deviceId !== state.deviceId) {
+                localStorage.removeItem('active_key');
+                return false;
+            }
+            
+            state.accessValid = true;
+            state.expiryTime = keyData.expiry;
+            state.activeKey = key;
+            
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('game-content').style.display = 'block';
+            
+            // Real-time listener for this key
+            setupRealtimeValidation(key);
+            
+            state.history = [];
+            state.currentP = '';
+            syncData();
+            startAllIntervals();
+            return true;
+        } catch(e) {
+            return false;
+        }
+    }
+    
+    // ========== START ALL INTERVALS (TIMER + SYNC) ==========
+    function startAllIntervals() {
+        // Clear old intervals if any
+        state.intervalIds.forEach(id => clearInterval(id));
+        state.intervalIds = [];
+        
+        // Timer interval (every second)
+        const timerInt = setInterval(() => {
+            if(!state.accessValid) return;
+            let sec = new Date().getSeconds();
+            let cycle = state.mode === '30S' ? 30 : 60;
+            let rem = cycle - (sec % cycle);
+            if(rem === cycle) rem = 0;
+            document.getElementById('timer').innerText = `00:${rem.toString().padStart(2,'0')}`;
+            if(rem === 1) syncData();
+        }, 1000);
+        state.intervalIds.push(timerInt);
+        
+        // Extra sync every 4 seconds to catch results faster
+        const syncInt = setInterval(() => {
+            if(state.accessValid) syncData();
+        }, 4000);
+        state.intervalIds.push(syncInt);
+        
+        // Expiry watcher (day expiry)
+        const expiryInt = setInterval(() => {
+            if(state.accessValid && Date.now() > state.expiryTime) {
+                revokeAccess("⏰ SESSION EXPIRED! DAY LIMIT OVER!");
+            }
+        }, 1000);
+        state.intervalIds.push(expiryInt);
+    }
+    
+    // ========== ORIGINAL SYNC FUNCTION (100% SAME BEHAVIOR) ==========
+    async function syncData() {
+        if(!state.accessValid) return;
+        try {
+            let res = await fetch(APIS[state.mode] + '?t=' + Date.now());
+            let data = await res.json();
+            let list = data.data.list;
+            
+            // Update existing history results
+            for(let row of list) {
+                let old = state.history.find(h => h.period === row.issueNumber);
+                if(old && old.status === 'WAIT') {
+                    let real = parseInt(row.number);
+                    let realBS = real >= 5 ? 'BIG' : 'SMALL';
+                    old.res = real;
+                    
+                    if (real === old.num1 || real === old.num2) {
+                        old.status = 'JACKPOT';
+                    } else if (old.predType === realBS) {
+                        old.status = 'WIN';
+                    } else {
+                        old.status = 'LOSS';
+                    }
+                }
+            }
+            
+            // Get next period
+            let nextP = (BigInt(list[0].issueNumber) + 1n).toString();
+            state.lastNums = list.slice(0, 15).map(i => parseInt(i.number));
+            
+            if(state.currentP !== nextP) {
+                state.currentP = nextP;
+                let exp = getSyncedPrediction(state.lastNums, nextP);
+                document.getElementById('pId').innerText = "PERIOD: " + nextP.slice(-4);
+                let box = document.getElementById('bsBox');
+                box.innerText = exp.pred;
+                box.style.color = exp.pred === 'BIG' ? '#ff3366' : '#00ff88';
+                document.getElementById('n1').innerText = exp.n1;
+                document.getElementById('n2').innerText = exp.n2;
+                
+                if(!state.history.find(h => h.period === nextP)) {
+                    state.history.unshift({ 
+                        period: nextP, 
+                        predDisplay: exp.pred + '(' + exp.n1 + ',' + exp.n2 + ')', 
+                        predType: exp.pred,
+                        num1: exp.n1,
+                        num2: exp.n2,
+                        res: '-', 
+                        status: 'WAIT' 
+                    });
+                    if(state.history.length > 15) state.history.pop();
+                }
+            }
+            
+            // Render history table
+            document.getElementById('hList').innerHTML = state.history.slice(0, 10).map(h => `
+                <tr>
+                    <td>${h.period.slice(-4)}</td>
+                    <td style="color:var(--primary)">${h.predDisplay}</td>
+                    <td><b>${h.res}</b></td>
+                    <td><span class="badge ${h.status.toLowerCase()}">${h.status}</span></td>
+                </tr>`).join('');
+                
+        } catch(e) {
+            console.warn("Sync error", e);
+        }
+    }
+    
+    function setMode(m) {
+        if(!state.accessValid) return;
+        state.mode = m;
+        document.getElementById('tab30').classList.toggle('active', m === '30S');
+        document.getElementById('tab60').classList.toggle('active', m === '1M');
+        state.history = [];
+        state.currentP = '';
+        syncData();
+    }
+    
+    // Expose functions globally
+    window.verifyKey = verifyKey;
+    window.setMode = setMode;
+    
+    // Start auto-login
+    autoLogin();
+</script>
+</body>
+</html>
